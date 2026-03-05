@@ -1,0 +1,8 @@
+<% content_for :title, "New Event" %>
+<div class="page-header">
+  <div>
+    <%= link_to "← Back", events_path, class: "btn btn-secondary btn-sm mb-2" %>
+    <h1>Create Event</h1>
+  </div>
+</div>
+<%= render "form", event: @event %>

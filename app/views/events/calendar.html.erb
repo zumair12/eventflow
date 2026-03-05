@@ -1,0 +1,63 @@
+<%# Calendar View -%>
+<% content_for :title, "Event Calendar" %>
+
+<div class="page-header">
+  <div>
+    <h1 class="page-header__title">📅 Event Calendar</h1>
+    <p class="page-header__subtitle">Browse events by date</p>
+  </div>
+  <div class="d-flex gap-1">
+    <div class="view-tabs">
+      <%= link_to "Grid", events_path, class: "view-tab" %>
+      <%= link_to "Calendar", calendar_events_path, class: "view-tab active" %>
+    </div>
+    <% if policy(Event).create? %>
+      <%= link_to "➕ New Event", new_event_path, class: "btn btn-primary" %>
+    <% end %>
+  </div>
+</div>
+
+<div class="calendar-wrapper animate-fade-up">
+  <div id="calendar" data-events="<%= @events_json %>"></div>
+</div>
+
+<!-- Category Legend -->
+<div class="d-flex gap-2 mt-3" style="flex-wrap:wrap;justify-content:center;">
+  <% [["concert","#6366f1"],["conference","#0ea5e9"],["workshop","#10b981"],["sports","#f59e0b"],["festival","#ec4899"]].each do |cat, color| %>
+    <div class="d-flex align-center gap-1" style="font-size:0.8rem;color:var(--text-secondary);">
+      <div style="width:10px;height:10px;border-radius:50%;background:<%= color %>;"></div>
+      <%= cat.capitalize %>
+    </div>
+  <% end %>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.11/index.global.min.js"></script>
+<script>
+  document.addEventListener('DOMContentLoaded', function () {
+    const calendarEl = document.getElementById('calendar');
+    const events = JSON.parse(calendarEl.dataset.events);
+
+    const calendar = new FullCalendar.Calendar(calendarEl, {
+      initialView: 'dayGridMonth',
+      headerToolbar: {
+        left: 'prev,next today',
+        center: 'title',
+        right: 'dayGridMonth,timeGridWeek,listWeek'
+      },
+      events: events,
+      eventClick: function(info) {
+        if (info.event.url) {
+          window.location.href = info.event.url;
+          info.jsEvent.preventDefault();
+        }
+      },
+      eventMouseEnter: function(info) {
+        const props = info.event.extendedProps;
+        info.el.title = `${info.event.title}\n📍 ${props.venue}\n💺 ${props.available_seats} seats\n💰 ${props.price == 0 ? 'Free' : '$' + props.price}`;
+      },
+      height: 'auto',
+      contentHeight: 650
+    });
+    calendar.render();
+  });
+</script>

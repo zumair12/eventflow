@@ -1,0 +1,149 @@
+<%# Dashboard Index — Role-aware -%>
+<% content_for :title, "Dashboard" %>
+
+<div class="page-header">
+  <div>
+    <h1 class="page-header__title">
+      Welcome back, <%= current_user.first_name %>! 👋
+    </h1>
+    <p class="page-header__subtitle">Here's what's happening with your events today.</p>
+  </div>
+  <% if current_user.organizer? || current_user.admin? %>
+    <%= link_to "New Event", new_event_path, class: "btn btn-primary" %>
+  <% else %>
+    <%= link_to "Browse Events", events_path, class: "btn btn-primary" %>
+  <% end %>
+</div>
+
+<!-- Stats Grid -->
+<div class="stats-grid mb-4 stagger-children">
+  <div class="stat-card animate-fade-up">
+    <div class="stat-icon stat-icon--primary">🎉</div>
+    <div class="stat-content">
+      <div class="stat-label">Total Events</div>
+      <div class="stat-value"><%= @total_events %></div>
+      <div class="stat-change">Available to book</div>
+    </div>
+  </div>
+  <div class="stat-card animate-fade-up">
+    <div class="stat-icon stat-icon--success">🎟️</div>
+    <div class="stat-content">
+      <div class="stat-label"><%= current_user.admin? ? 'Total Bookings' : 'My Bookings' %></div>
+      <div class="stat-value"><%= @total_bookings %></div>
+      <div class="stat-change">All time</div>
+    </div>
+  </div>
+
+  <% if current_user.admin? %>
+    <div class="stat-card animate-fade-up">
+      <div class="stat-icon stat-icon--info">👥</div>
+      <div class="stat-content">
+        <div class="stat-label">Total Users</div>
+        <div class="stat-value"><%= @total_users %></div>
+        <div class="stat-change">Registered users</div>
+      </div>
+    </div>
+    <div class="stat-card animate-fade-up">
+      <div class="stat-icon stat-icon--warning">💰</div>
+      <div class="stat-content">
+        <div class="stat-label">Total Revenue</div>
+        <div class="stat-value">$<%= number_with_delimiter(@revenue.to_i) %></div>
+        <div class="stat-change">Confirmed bookings</div>
+      </div>
+    </div>
+  <% elsif current_user.organizer? %>
+    <div class="stat-card animate-fade-up">
+      <div class="stat-icon stat-icon--accent">📋</div>
+      <div class="stat-content">
+        <div class="stat-label">My Events</div>
+        <div class="stat-value"><%= @my_events %></div>
+        <div class="stat-change">Created by you</div>
+      </div>
+    </div>
+    <div class="stat-card animate-fade-up">
+      <div class="stat-icon stat-icon--warning">💰</div>
+      <div class="stat-content">
+        <div class="stat-label">My Revenue</div>
+        <div class="stat-value">$<%= number_with_delimiter(@my_revenue.to_i) %></div>
+        <div class="stat-change">From your events</div>
+      </div>
+    </div>
+  <% end %>
+</div>
+
+<div class="d-flex gap-3" style="flex-wrap:wrap;align-items:flex-start;">
+  <!-- Upcoming Events -->
+  <div style="flex:2;min-width:320px;">
+    <div class="card">
+      <div class="card-header">
+        <h3 style="margin:0;">🗓️ Upcoming Events</h3>
+        <%= link_to "View All", events_path, class: "btn btn-secondary btn-sm" %>
+      </div>
+      <div class="card-body" style="padding:0;">
+        <% if @upcoming_events.any? %>
+          <% @upcoming_events.each do |event| %>
+            <%= link_to event_path(event), style: "text-decoration:none;" do %>
+              <div style="display:flex;align-items:center;gap:1rem;padding:1rem 1.5rem;border-bottom:1px solid var(--border-color);transition:background var(--transition);" onmouseenter="this.style.background='var(--bg-elevated)'" onmouseleave="this.style.background=''">
+                <div style="width:48px;height:48px;border-radius:10px;background:linear-gradient(135deg,var(--primary-700),var(--primary-900));display:flex;align-items:center;justify-content:center;font-size:1.5rem;flex-shrink:0;">
+                  <%= event_emoji(event.category) %>
+                </div>
+                <div style="flex:1;min-width:0;">
+                  <div style="font-weight:600;color:var(--text-primary);font-size:0.9rem;" class="truncate"><%= event.title %></div>
+                  <div style="font-size:0.8rem;color:var(--text-muted);">
+                    📅 <%= event.start_at.strftime("%b %d, %Y at %I:%M %p") %> &nbsp;·&nbsp; 🏟️ <%= event.venue.name %>
+                  </div>
+                </div>
+                <div>
+                  <% if event.free? %>
+                    <span class="badge badge-success">Free</span>
+                  <% else %>
+                    <span class="badge badge-secondary">$<%= number_with_precision(event.price, precision: 0) %></span>
+                  <% end %>
+                </div>
+              </div>
+            <% end %>
+          <% end %>
+        <% else %>
+          <div class="empty-state">
+            <div class="empty-state__icon">🎉</div>
+            <p class="empty-state__text">No upcoming events yet</p>
+            <% if current_user.organizer? %>
+              <%= link_to "Create Event", new_event_path, class: "btn btn-primary btn-sm" %>
+            <% end %>
+          </div>
+        <% end %>
+      </div>
+    </div>
+  </div>
+
+  <!-- My Upcoming Bookings -->
+  <div style="flex:1;min-width:280px;">
+    <div class="card">
+      <div class="card-header">
+        <h3 style="margin:0;">🎟️ My Bookings</h3>
+        <%= link_to "All", bookings_path, class: "btn btn-secondary btn-sm" %>
+      </div>
+      <div class="card-body" style="padding:0;">
+        <% if @my_upcoming_bookings.any? %>
+          <% @my_upcoming_bookings.each do |booking| %>
+            <%= link_to booking_path(booking), style: "text-decoration:none;" do %>
+              <div style="padding:1rem 1.5rem;border-bottom:1px solid var(--border-color);" onmouseenter="this.style.background='var(--bg-elevated)'" onmouseleave="this.style.background=''">
+                <div style="font-weight:600;color:var(--text-primary);font-size:0.85rem;" class="truncate"><%= booking.event.title %></div>
+                <div style="font-size:0.78rem;color:var(--text-muted);margin-top:2px;">
+                  <%= booking.event.start_at.strftime("%b %d") %> &nbsp;·&nbsp;
+                  <code style="font-size:0.72rem;color:var(--primary-400)"><%= booking.reference_code %></code>
+                </div>
+              </div>
+            <% end %>
+          <% end %>
+        <% else %>
+          <div class="empty-state" style="padding:2rem;">
+            <div class="empty-state__icon">🎟️</div>
+            <p class="empty-state__text">No upcoming bookings</p>
+            <%= link_to "Find Events", events_path, class: "btn btn-primary btn-sm" %>
+          </div>
+        <% end %>
+      </div>
+    </div>
+  </div>
+</div>

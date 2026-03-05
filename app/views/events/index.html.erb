@@ -1,0 +1,100 @@
+<%# Events Index -%>
+<% content_for :title, "Events" %>
+
+<div class="page-header">
+  <div>
+    <h1 class="page-header__title">Events</h1>
+    <p class="page-header__subtitle">Discover and book amazing experiences</p>
+  </div>
+  <div class="d-flex gap-1">
+    <%= link_to "📅 Calendar", calendar_events_path, class: "btn btn-secondary" %>
+    <% if policy(Event).create? %>
+      <%= link_to "➕ New Event", new_event_path, class: "btn btn-primary" %>
+    <% end %>
+  </div>
+</div>
+
+<!-- Filters -->
+<%= form_with url: events_path, method: :get, local: true do |f| %>
+  <div class="filters-bar">
+    <div class="search-box">
+      <span class="search-box__icon">🔍</span>
+      <%= f.text_field :q, value: params[:q], placeholder: "Search events…",
+          class: "form-control", id: "event-search" %>
+    </div>
+
+    <%= link_to "All", events_path, class: "filter-chip #{params[:category].blank? ? 'active' : ''}" %>
+    <% Event::CATEGORIES.each do |cat| %>
+      <%= link_to cat.capitalize, events_path(category: cat, q: params[:q]),
+          class: "filter-chip #{params[:category] == cat ? 'active' : ''}" %>
+    <% end %>
+
+    <%= link_to "Upcoming Only", events_path(upcoming: "1", q: params[:q], category: params[:category]),
+        class: "filter-chip #{params[:upcoming].present? ? 'active' : ''}" %>
+  </div>
+<% end %>
+
+<!-- Events Grid -->
+<% if @events.any? %>
+  <div class="events-grid stagger-children">
+    <% @events.each do |event| %>
+      <div class="event-card animate-fade-up">
+        <div class="event-card__image">
+          <div style="width:100%;height:100%;display:flex;align-items:center;justify-content:center;font-size:3.5rem;background:linear-gradient(135deg, var(--bg-elevated), var(--primary-900));">
+            <%= event_emoji(event.category) %>
+          </div>
+          <div class="event-card__badge">
+            <%= status_badge(event.status) %>
+          </div>
+          <div class="event-card__price">
+            <%= event.free? ? "Free" : number_to_currency(event.price, unit: "$", precision: 0) %>
+          </div>
+        </div>
+
+        <div class="event-card__body">
+          <div class="event-card__title"><%= event.title %></div>
+          <div class="event-card__meta">
+            <div class="event-card__meta-item">
+              📅 <%= event.start_at.strftime("%A, %B %d at %I:%M %p") %>
+            </div>
+            <div class="event-card__meta-item">
+              🏟️ <%= event.venue.name %>, <%= event.venue.city %>
+            </div>
+            <div class="event-card__meta-item">
+              💺 <%= pluralize(event.available_seats_count, "seat") %> available
+              <% if event.sold_out? %>
+                <span class="badge badge-danger">Sold Out</span>
+              <% end %>
+            </div>
+          </div>
+        </div>
+
+        <div class="event-card__footer">
+          <% if event.category.present? %>
+            <span class="badge badge-primary"><%= event.category.capitalize %></span>
+          <% else %>
+            <span></span>
+          <% end %>
+          <div class="d-flex gap-1">
+            <%= link_to "View", event_path(event), class: "btn btn-secondary btn-sm" %>
+            <% if !event.sold_out? && event.status_published? && user_signed_in? %>
+              <%= link_to "Book", new_event_booking_path(event), class: "btn btn-primary btn-sm" %>
+            <% end %>
+          </div>
+        </div>
+      </div>
+    <% end %>
+  </div>
+
+  <div class="text-center mt-4">
+    <%== pagy_nav(@pagy) if @pagy.pages > 1 %>
+  </div>
+
+<% else %>
+  <div class="empty-state">
+    <div class="empty-state__icon">🎉</div>
+    <h3>No events found</h3>
+    <p class="empty-state__text">Try adjusting your search or filters.</p>
+    <%= link_to "Clear Filters", events_path, class: "btn btn-secondary" %>
+  </div>
+<% end %>
