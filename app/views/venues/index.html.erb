@@ -1,0 +1,58 @@
+<%# Venues Index -%>
+<% content_for :title, "Venues" %>
+
+<div class="page-header">
+  <div>
+    <h1 class="page-header__title">🏟️ Venues</h1>
+    <p class="page-header__subtitle">Event spaces and seat configurations</p>
+  </div>
+  <% if policy(Venue).create? %>
+    <%= link_to "➕ New Venue", new_venue_path, class: "btn btn-primary" %>
+  <% end %>
+</div>
+
+<div class="events-grid stagger-children">
+  <% @venues.each do |venue| %>
+    <div class="card animate-fade-up">
+      <div style="height:160px;background:linear-gradient(135deg,var(--bg-elevated),var(--primary-900));display:flex;align-items:center;justify-content:center;font-size:4rem;">
+        🏟️
+      </div>
+      <div class="card-body">
+        <h4 style="margin-bottom:0.35rem;"><%= venue.name %></h4>
+        <p style="font-size:0.82rem;color:var(--text-muted);margin-bottom:0.75rem;">
+          📍 <%= venue.address %>, <%= venue.city %>
+        </p>
+        <div class="d-flex gap-1" style="flex-wrap:wrap;">
+          <span class="badge badge-secondary">🪑 <%= venue.total_capacity %> seats</span>
+          <span class="badge badge-secondary"><%= venue.rows %> rows × <%= venue.columns %> cols</span>
+        </div>
+      </div>
+      <div class="card-footer d-flex gap-1">
+        <%= link_to "View", venue_path(venue), class: "btn btn-secondary btn-sm" %>
+        <% if policy(venue).update? %>
+          <%= link_to "Edit", edit_venue_path(venue), class: "btn btn-secondary btn-sm" %>
+        <% end %>
+        <% if policy(venue).destroy? %>
+          <%= button_to "Delete", venue_path(venue), method: :delete,
+              class: "btn btn-danger btn-sm",
+              data: { turbo_confirm: "Delete #{venue.name}?" } %>
+        <% end %>
+      </div>
+    </div>
+  <% end %>
+</div>
+
+<% if @venues.empty? %>
+  <div class="empty-state">
+    <div class="empty-state__icon">🏟️</div>
+    <h3>No venues yet</h3>
+    <p class="empty-state__text">Add a venue to start creating events.</p>
+    <% if policy(Venue).create? %>
+      <%= link_to "Add Venue", new_venue_path, class: "btn btn-primary" %>
+    <% end %>
+  </div>
+<% end %>
+
+<div class="text-center mt-4">
+  <%== pagy_nav(@pagy) if @pagy.pages > 1 %>
+</div>

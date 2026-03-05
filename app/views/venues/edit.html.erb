@@ -1,0 +1,8 @@
+<% content_for :title, "Edit: #{@venue.name}" %>
+<div class="page-header">
+  <div>
+    <%= link_to "← #{@venue.name}", venue_path(@venue), class: "btn btn-secondary btn-sm mb-2" %>
+    <h1>Edit Venue</h1>
+  </div>
+</div>
+<%= render "form", venue: @venue %>

@@ -1,0 +1,110 @@
+<%# Venue Show -%>
+<% content_for :title, @venue.name %>
+
+<div class="page-header">
+  <div>
+    <%= link_to "← Venues", venues_path, class: "btn btn-secondary btn-sm mb-2" %>
+    <h1 class="page-header__title"><%= @venue.name %></h1>
+    <p class="page-header__subtitle">📍 <%= @venue.address %>, <%= @venue.city %></p>
+  </div>
+  <div class="d-flex gap-1">
+    <% if policy(@venue).update? %>
+      <%= link_to "✏️ Edit", edit_venue_path(@venue), class: "btn btn-secondary" %>
+    <% end %>
+  </div>
+</div>
+
+<div class="d-flex gap-3" style="flex-wrap:wrap;align-items:flex-start;">
+  <!-- Seat Grid -->
+  <div style="flex:2;min-width:320px;">
+    <div class="card">
+      <div class="card-header">
+        <h3 style="margin:0;">💺 Seat Layout</h3>
+        <div class="d-flex gap-1">
+          <span class="badge badge-secondary"><%= @venue.rows %> rows</span>
+          <span class="badge badge-secondary"><%= @venue.columns %> cols</span>
+          <span class="badge badge-primary"><%= @venue.total_capacity %> total</span>
+        </div>
+      </div>
+      <div class="card-body">
+        <div class="seat-map-wrapper">
+          <div class="seat-map-screen"></div>
+          <% @seats.each do |row_num, row_seats| %>
+            <div class="seat-row">
+              <span class="seat-row-label"><%= ('A'.ord + row_num - 1).chr %></span>
+              <% row_seats.sort_by(&:column).each do |seat| %>
+                <div class="seat-btn seat-btn--available seat-btn--<%= seat.seat_type %>"
+                     title="<%= seat.label %> (<%= seat.seat_type.capitalize %>)"
+                     style="cursor:default;">
+                  <span style="font-size:0.55rem;"><%= seat.column %></span>
+                </div>
+              <% end %>
+            </div>
+          <% end %>
+          <div class="seat-legend">
+            <div class="legend-item">
+              <div class="legend-swatch" style="background:var(--bg-input);border-color:var(--primary-600);"></div> Standard
+            </div>
+            <div class="legend-item">
+              <div class="legend-swatch" style="background:rgba(236,72,153,0.15);border-color:var(--accent-600);"></div> VIP
+            </div>
+            <div class="legend-item">
+              <div class="legend-swatch" style="background:rgba(16,185,129,0.15);border-color:var(--success);"></div> Accessible
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Sidebar -->
+  <div style="flex:1;min-width:240px;display:flex;flex-direction:column;gap:1rem;">
+    <div class="card">
+      <div class="card-header"><h4 style="margin:0;">ℹ️ Venue Info</h4></div>
+      <div class="card-body">
+        <div style="display:flex;flex-direction:column;gap:0.75rem;">
+          <div>
+            <div class="stat-label">Name</div>
+            <div style="font-weight:600;color:var(--text-primary);margin-top:2px;"><%= @venue.name %></div>
+          </div>
+          <div>
+            <div class="stat-label">Address</div>
+            <div style="font-weight:600;color:var(--text-primary);margin-top:2px;"><%= @venue.address %></div>
+          </div>
+          <div>
+            <div class="stat-label">City</div>
+            <div style="font-weight:600;color:var(--text-primary);margin-top:2px;"><%= @venue.city %></div>
+          </div>
+          <div>
+            <div class="stat-label">Total Capacity</div>
+            <div style="font-size:1.5rem;font-weight:800;color:var(--primary-300);margin-top:2px;"><%= @venue.total_capacity %></div>
+          </div>
+        </div>
+        <% if @venue.description.present? %>
+          <div style="margin-top:1rem;padding-top:1rem;border-top:1px solid var(--border-color);color:var(--text-secondary);font-size:0.85rem;line-height:1.6;">
+            <%= @venue.description %>
+          </div>
+        <% end %>
+      </div>
+    </div>
+
+    <!-- Upcoming Events -->
+    <div class="card">
+      <div class="card-header"><h4 style="margin:0;">📅 Upcoming Events</h4></div>
+      <div class="card-body" style="padding:0;">
+        <% if @upcoming.any? %>
+          <% @upcoming.each do |event| %>
+            <%= link_to event_path(event), style: "text-decoration:none;" do %>
+              <div style="padding:0.85rem 1rem;border-bottom:1px solid var(--border-color);" onmouseenter="this.style.background='var(--bg-elevated)'" onmouseleave="this.style.background=''">
+                <div style="font-weight:600;color:var(--text-primary);font-size:0.85rem;" class="truncate"><%= event.title %></div>
+                <div style="font-size:0.75rem;color:var(--text-muted);margin-top:2px;"><%= event.start_at.strftime("%b %d, %Y") %></div>
+              </div>
+            <% end %>
+          <% end %>
+        <% else %>
+          <div class="empty-state" style="padding:1.5rem;"><p style="font-size:0.85rem;margin:0;">No upcoming events</p></div>
+        <% end %>
+      </div>
+    </div>
+  </div>
+</div>

@@ -1,0 +1,71 @@
+<%# Admin Users Index -%>
+<% content_for :title, "Users" %>
+
+<div class="page-header">
+  <div>
+    <h1 class="page-header__title">👥 Users</h1>
+    <p class="page-header__subtitle">Manage all registered users</p>
+  </div>
+</div>
+
+<%= form_with url: admin_users_path, method: :get, local: true do |f| %>
+  <div class="filters-bar mb-3">
+    <div class="search-box">
+      <span class="search-box__icon">🔍</span>
+      <%= f.text_field :q, value: params[:q], placeholder: "Search by name or email…",
+          class: "form-control", id: "user-search" %>
+    </div>
+    <%= f.submit "Search", class: "btn btn-secondary" %>
+  </div>
+<% end %>
+
+<div class="card">
+  <div class="table-wrapper">
+    <table id="users-table">
+      <thead>
+        <tr>
+          <th>User</th>
+          <th>Email</th>
+          <th>Role</th>
+          <th>Phone</th>
+          <th>Joined</th>
+          <th style="text-align:right;">Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        <% @users.each do |user| %>
+          <tr>
+            <td>
+              <div class="d-flex align-center gap-1">
+                <div class="user-avatar" style="width:32px;height:32px;font-size:0.72rem;flex-shrink:0;"><%= user.initials %></div>
+                <span style="font-weight:600;color:var(--text-primary);"><%= user.full_name %></span>
+              </div>
+            </td>
+            <td style="color:var(--text-secondary);font-size:0.85rem;"><%= user.email %></td>
+            <td>
+              <span class="badge badge-<%= user.admin? ? 'primary' : (user.organizer? ? 'accent' : 'secondary') %>">
+                <%= user.role.capitalize %>
+              </span>
+            </td>
+            <td style="color:var(--text-muted);font-size:0.82rem;"><%= user.phone || "—" %></td>
+            <td style="color:var(--text-muted);font-size:0.82rem;"><%= user.created_at.strftime("%b %d, %Y") %></td>
+            <td>
+              <div class="d-flex gap-1" style="justify-content:flex-end;">
+                <%= link_to "Edit", edit_admin_user_path(user), class: "btn btn-secondary btn-sm" %>
+                <% unless user == current_user %>
+                  <%= button_to "Delete", admin_user_path(user), method: :delete,
+                      class: "btn btn-danger btn-sm",
+                      data: { turbo_confirm: "Delete #{user.full_name}?" } %>
+                <% end %>
+              </div>
+            </td>
+          </tr>
+        <% end %>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<div class="text-center mt-4">
+  <%== pagy_nav(@pagy) if @pagy.pages > 1 %>
+</div>

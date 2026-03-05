@@ -1,0 +1,51 @@
+<%# Admin Events Index -%>
+<% content_for :title, "All Events (Admin)" %>
+
+<div class="page-header">
+  <div>
+    <h1 class="page-header__title">🎉 Events (Admin)</h1>
+    <p class="page-header__subtitle">Overview of all events across all organizers</p>
+  </div>
+  <%= link_to "➕ New Event", new_event_path, class: "btn btn-primary" %>
+</div>
+
+<div class="card">
+  <div class="table-wrapper">
+    <table>
+      <thead>
+        <tr>
+          <th>Title</th>
+          <th>Organizer</th>
+          <th>Venue</th>
+          <th>Date</th>
+          <th>Capacity</th>
+          <th>Status</th>
+          <th style="text-align:right;">Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        <% @events.each do |event| %>
+          <tr>
+            <td>
+              <div style="font-weight:600;color:var(--text-primary);"><%= event.title %></div>
+              <% if event.category.present? %>
+                <span class="badge badge-primary" style="margin-top:2px;"><%= event.category.capitalize %></span>
+              <% end %>
+            </td>
+            <td style="font-size:0.85rem;color:var(--text-secondary);"><%= event.organizer.full_name %></td>
+            <td style="font-size:0.85rem;color:var(--text-secondary);"><%= event.venue.name %></td>
+            <td style="font-size:0.82rem;color:var(--text-muted);"><%= event.start_at.strftime("%b %d, %Y") %></td>
+            <td style="font-size:0.85rem;"><%= event.available_seats_count %> / <%= event.capacity %></td>
+            <td><%= status_badge(event.status) %></td>
+            <td>
+              <div class="d-flex gap-1" style="justify-content:flex-end;">
+                <%= link_to "View", event_path(event), class: "btn btn-secondary btn-sm" %>
+                <%= link_to "Edit", edit_event_path(event), class: "btn btn-secondary btn-sm" %>
+              </div>
+            </td>
+          </tr>
+        <% end %>
+      </tbody>
+    </table>
+  </div>
+</div>

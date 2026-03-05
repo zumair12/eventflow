@@ -1,0 +1,61 @@
+<%# Venue Form Partial -%>
+<div class="card" style="max-width:640px;">
+  <div class="card-header">
+    <h3 style="margin:0;"><%= @venue.new_record? ? "Add New Venue" : "Edit Venue" %></h3>
+  </div>
+  <div class="card-body">
+    <%= form_with model: @venue, local: true do |f| %>
+      <% if @venue.errors.any? %>
+        <div class="flash flash-alert mb-3">
+          <ul style="padding-left:1rem;">
+            <% @venue.errors.full_messages.each do |msg| %><li><%= msg %></li><% end %>
+          </ul>
+        </div>
+      <% end %>
+
+      <div style="display:flex;flex-direction:column;gap:1rem;">
+        <div class="form-group">
+          <%= f.label :name, class: "form-label" %>
+          <%= f.text_field :name, class: "form-control", placeholder: "Grand Arena", id: "venue_name" %>
+        </div>
+
+        <div class="form-group">
+          <%= f.label :address, class: "form-label" %>
+          <%= f.text_field :address, class: "form-control", placeholder: "123 Main Street", id: "venue_address" %>
+        </div>
+
+        <div class="form-group">
+          <%= f.label :city, class: "form-label" %>
+          <%= f.text_field :city, class: "form-control", placeholder: "New York", id: "venue_city" %>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <%= f.label :rows, "Rows (A-?)", class: "form-label" %>
+            <%= f.number_field :rows, class: "form-control", min: 1, max: 50, placeholder: "10", id: "venue_rows" %>
+            <span class="form-hint">Max 50</span>
+          </div>
+          <div class="form-group">
+            <%= f.label :columns, "Seats per Row", class: "form-label" %>
+            <%= f.number_field :columns, class: "form-control", min: 1, max: 50, placeholder: "10", id: "venue_columns" %>
+            <span class="form-hint">Max 50</span>
+          </div>
+        </div>
+
+        <div style="background:var(--bg-elevated);border-radius:var(--radius-sm);padding:0.75rem;font-size:0.82rem;color:var(--text-secondary);">
+          ⚠️ <strong>Note:</strong> Seat layout is auto-generated from rows × columns on creation and cannot be changed afterwards.
+        </div>
+
+        <div class="form-group">
+          <%= f.label :description, "Description (optional)", class: "form-label" %>
+          <%= f.text_area :description, class: "form-control", rows: 3, placeholder: "Describe the venue…", id: "venue_description" %>
+        </div>
+      </div>
+
+      <div class="d-flex gap-2 mt-4">
+        <%= f.submit (@venue.new_record? ? "Create Venue" : "Update Venue"), class: "btn btn-primary", id: "venue_submit" %>
+        <%= link_to "Cancel", venues_path, class: "btn btn-secondary" %>
+      </div>
+    <% end %>
+  </div>
+</div>
