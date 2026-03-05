@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <style>
+      body { font-family: 'Inter', -apple-system, sans-serif; background: #0d0f14; color: #f4f6ff; margin: 0; padding: 0; }
+      .wrapper { max-width: 600px; margin: 0 auto; padding: 32px 16px; }
+      .card { background: #1a1d27; border: 1px solid rgba(255,255,255,0.07); border-radius: 18px; overflow: hidden; }
+      .header { background: linear-gradient(135deg, #4f46e5, #ec4899); padding: 32px; text-align: center; }
+      .logo { font-size: 1.5rem; font-weight: 800; color: white; }
+      .body { padding: 32px; }
+      .reference { background: linear-gradient(135deg, rgba(99,102,241,0.15), rgba(236,72,153,0.1)); border: 1px solid rgba(99,102,241,0.25); border-radius: 12px; padding: 24px; text-align: center; margin: 24px 0; }
+      .reference-code { font-size: 2rem; font-weight: 800; letter-spacing: 4px; color: #a5b4fc; }
+      .info-row { display: flex; justify-content: space-between; padding: 10px 0; border-bottom: 1px solid rgba(255,255,255,0.07); font-size: 0.9rem; }
+      .label { color: #9198b4; }
+      .value { color: #f4f6ff; font-weight: 600; }
+      .seats { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 12px; }
+      .seat-badge { background: rgba(99,102,241,0.2); border: 1px solid rgba(99,102,241,0.3); border-radius: 8px; padding: 6px 12px; font-size: 0.85rem; font-weight: 700; color: #a5b4fc; }
+      .footer { padding: 20px 32px; background: #151822; text-align: center; font-size: 0.78rem; color: #5c6387; border-top: 1px solid rgba(255,255,255,0.07); }
+      .btn { display: inline-block; background: linear-gradient(135deg, #4f46e5, #6366f1); color: white; text-decoration: none; padding: 12px 28px; border-radius: 8px; font-weight: 700; font-size: 0.9rem; margin: 20px 0; }
+    </style>
+  </head>
+  <body>
+    <div class="wrapper">
+      <div class="card">
+        <div class="header">
+          <div class="logo">🎫 EventFlow</div>
+          <div style="color:rgba(255,255,255,0.85);margin-top:8px;font-size:0.95rem;">Booking Confirmed ✓</div>
+        </div>
+        <div class="body">
+          <p>Hi <strong><%= @user.first_name %></strong>,</p>
+          <p style="color:#9198b4;">Your booking is confirmed! Here are your details:</p>
+
+          <div class="reference">
+            <div style="font-size:0.72rem;color:#5c6387;font-weight:700;text-transform:uppercase;letter-spacing:1.5px;margin-bottom:8px;">Booking Reference</div>
+            <div class="reference-code"><%= @booking.reference_code %></div>
+          </div>
+
+          <div style="margin: 20px 0;">
+            <div class="info-row"><span class="label">Event</span><span class="value"><%= @event.title %></span></div>
+            <div class="info-row"><span class="label">Date</span><span class="value"><%= @event.start_at.strftime("%A, %B %d, %Y") %></span></div>
+            <div class="info-row"><span class="label">Time</span><span class="value"><%= @event.start_at.strftime("%I:%M %p") %></span></div>
+            <div class="info-row"><span class="label">Venue</span><span class="value"><%= @event.venue.name %></span></div>
+            <div class="info-row"><span class="label">Total Seats</span><span class="value"><%= pluralize(@booking.total_seats, "seat") %></span></div>
+            <div class="info-row" style="border:none;"><span class="label">Total Paid</span><span class="value" style="color:#6ee7b7;font-size:1.1rem;"><%= @booking.total_amount.zero? ? "Free" : number_to_currency(@booking.total_amount, unit:"$") %></span></div>
+          </div>
+
+          <div>
+            <div style="font-size:0.8rem;font-weight:700;color:#9198b4;text-transform:uppercase;letter-spacing:0.8px;margin-bottom:8px;">Your Seats</div>
+            <div class="seats">
+              <% @seats.each do |seat| %>
+                <div class="seat-badge"><%= seat.label %> <span style="font-size:0.7rem;opacity:0.7;">(<%= seat.seat_type %>)</span></div>
+              <% end %>
+            </div>
+          </div>
+
+          <div style="text-align:center;">
+            <%= link_to "View Booking", booking_url(@booking), class: "btn" %>
+          </div>
+
+          <p style="color:#5c6387;font-size:0.82rem;">You'll receive reminders before the event. Present your reference code at the entrance.</p>
+        </div>
+        <div class="footer">
+          © <%= Date.today.year %> EventFlow · <a href="<%= root_url %>" style="color:#6366f1;">eventflow.app</a>
+        </div>
+      </div>
+    </div>
+  </body>
+</html>

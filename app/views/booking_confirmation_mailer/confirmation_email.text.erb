@@ -1,0 +1,19 @@
+EventFlow — Booking Confirmed
+
+Hi <%= @user.first_name %>,
+
+Your booking is CONFIRMED!
+
+Booking Reference: <%= @booking.reference_code %>
+
+Event:   <%= @event.title %>
+Date:    <%= @event.start_at.strftime("%A, %B %d, %Y at %I:%M %p") %>
+Venue:   <%= @event.venue.name %>, <%= @event.venue.city %>
+Seats:   <%= @booking.seats.map(&:label).join(", ") %>
+Total:   <%= @booking.total_amount.zero? ? "Free" : number_to_currency(@booking.total_amount, unit:"$") %>
+
+View Booking: <%= booking_url(@booking) %>
+
+You'll receive a reminder 24 hours and 1 hour before the event.
+
+— EventFlow Team

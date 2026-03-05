@@ -1,0 +1,15 @@
+EventFlow — Event Reminder
+
+Hi <%= @user.first_name %>,
+
+This is a reminder that your event is coming up soon!
+
+<%= @event.title %>
+Date: <%= @event.start_at.strftime("%A, %B %d, %Y at %I:%M %p") %>
+Venue: <%= @event.venue.name %>, <%= @event.venue.city %>
+Your Seats: <%= @booking.seats.map(&:label).join(", ") %>
+Reference: <%= @booking.reference_code %>
+
+View Booking: <%= booking_url(@booking) %>
+
+— EventFlow Team
