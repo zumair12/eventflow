@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <title><%= content_for?(:title) ? "#{yield(:title)} — Admin · EventFlow" : "Admin · EventFlow" %></title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <%= csrf_meta_tags %>
+    <%= csp_meta_tag %>
+    <%= stylesheet_link_tag "application", "data-turbo-track": "reload" %>
+    <%= javascript_importmap_tags %>
+  </head>
+  <body>
+    <div class="layout">
+      <nav class="navbar">
+        <div class="d-flex align-center gap-2">
+          <%= link_to root_path, class: "navbar__brand" do %>
+            <div class="navbar__brand-icon">🎫</div>
+            EventFlow
+          <% end %>
+          <span class="badge badge-primary" style="font-size:0.72rem;letter-spacing:0.5px;">ADMIN</span>
+        </div>
+        <div class="navbar__actions">
+          <%= link_to "← App", dashboard_path, class: "btn btn-secondary btn-sm" %>
+          <div class="navbar__user">
+            <div class="user-avatar"><%= current_user.initials %></div>
+            <span style="font-size:0.85rem;font-weight:600;"><%= current_user.first_name %></span>
+          </div>
+          <%= link_to destroy_user_session_path, data: { turbo_method: :delete }, class: "btn btn-secondary btn-sm" do %>
+            Sign Out
+          <% end %>
+        </div>
+      </nav>
+
+      <aside class="sidebar">
+        <div class="sidebar__section" style="margin-top:0;">
+          <%= link_to admin_root_path, class: "nav-link" do %>
+            <span class="nav-icon">📊</span> Dashboard
+          <% end %>
+          <%= link_to admin_users_path, class: "nav-link" do %>
+            <span class="nav-icon">👥</span> Users
+          <% end %>
+          <%= link_to admin_bookings_path, class: "nav-link" do %>
+            <span class="nav-icon">🎟️</span> Bookings
+          <% end %>
+          <%= link_to admin_events_path, class: "nav-link" do %>
+            <span class="nav-icon">🎉</span> Events
+          <% end %>
+          <%= link_to venues_path, class: "nav-link" do %>
+            <span class="nav-icon">🏟️</span> Venues
+          <% end %>
+        </div>
+      </aside>
+
+      <main class="main-content">
+        <% if notice.present? %>
+          <div class="flash flash-notice animate-fade-up">
+            ✅ <%= notice %>
+            <button class="flash__close" onclick="this.parentElement.remove()">✕</button>
+          </div>
+        <% end %>
+        <% if alert.present? %>
+          <div class="flash flash-alert animate-fade-up">
+            ⚠️ <%= alert %>
+            <button class="flash__close" onclick="this.parentElement.remove()">✕</button>
+          </div>
+        <% end %>
+        <%= yield %>
+      </main>
+    </div>
+  </body>
+</html>

@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <meta name="description" content="EventFlow — Premium Event Booking System with seat selection, calendar, and reminders">
+    <title><%= content_for?(:title) ? "#{yield(:title)} — EventFlow" : "EventFlow — Book Your Next Experience" %></title>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.11/index.global.min.css">
+
+    <%= csrf_meta_tags %>
+    <%= csp_meta_tag %>
+
+    <%= stylesheet_link_tag "application", "data-turbo-track": "reload" %>
+    <%= javascript_importmap_tags %>
+  </head>
+
+  <body>
+    <% if user_signed_in? %>
+      <div class="layout">
+        <!-- Navbar -->
+        <nav class="navbar">
+          <div style="display:flex;align-items:center;gap:1rem;">
+            <%= link_to root_path, class: "navbar__brand" do %>
+              <div class="navbar__brand-icon">🎫</div>
+              EventFlow
+            <% end %>
+          </div>
+
+          <div class="navbar__actions">
+            <%= link_to events_path, class: "btn btn-secondary btn-sm" do %>
+              Browse Events
+            <% end %>
+
+            <div class="navbar__user">
+              <div class="user-avatar"><%= current_user.initials %></div>
+              <span style="font-size:0.85rem;font-weight:600;"><%= current_user.first_name %></span>
+              <span class="badge badge-<%= current_user.admin? ? 'primary' : (current_user.organizer? ? 'accent' : 'secondary') %>" style="font-size:0.65rem;">
+                <%= current_user.role.capitalize %>
+              </span>
+            </div>
+
+            <%= link_to destroy_user_session_path, data: { turbo_method: :delete }, class: "btn btn-secondary btn-sm" do %>
+              Sign Out
+            <% end %>
+          </div>
+        </nav>
+
+        <!-- Sidebar -->
+        <aside class="sidebar">
+          <div class="sidebar__section" style="margin-top:0;">
+            <%= link_to dashboard_path, class: "nav-link #{current_page?(dashboard_path) ? 'active' : ''}" do %>
+              <span class="nav-icon">📊</span> Dashboard
+            <% end %>
+            <%= link_to events_path, class: "nav-link #{current_page?(events_path) ? 'active' : ''}" do %>
+              <span class="nav-icon">🎉</span> Browse Events
+            <% end %>
+            <%= link_to calendar_events_path, class: "nav-link #{current_page?(calendar_events_path) ? 'active' : ''}" do %>
+              <span class="nav-icon">📅</span> Calendar
+            <% end %>
+            <%= link_to bookings_path, class: "nav-link #{current_page?(bookings_path) ? 'active' : ''}" do %>
+              <span class="nav-icon">🎟️</span> My Bookings
+            <% end %>
+          </div>
+
+          <% if current_user.organizer? %>
+            <div class="sidebar__section">
+              <div class="sidebar__section-title">Organizer</div>
+              <%= link_to new_event_path, class: "nav-link" do %>
+                <span class="nav-icon">➕</span> New Event
+              <% end %>
+              <%= link_to venues_path, class: "nav-link #{current_page?(venues_path) ? 'active' : ''}" do %>
+                <span class="nav-icon">🏟️</span> Venues
+              <% end %>
+            </div>
+          <% end %>
+
+          <% if current_user.admin? %>
+            <div class="sidebar__section">
+              <div class="sidebar__section-title">Admin</div>
+              <%= link_to admin_root_path, class: "nav-link" do %>
+                <span class="nav-icon">⚙️</span> Admin Panel
+              <% end %>
+              <%= link_to admin_users_path, class: "nav-link" do %>
+                <span class="nav-icon">👥</span> Users
+              <% end %>
+              <%= link_to admin_bookings_path, class: "nav-link" do %>
+                <span class="nav-icon">📋</span> All Bookings
+              <% end %>
+              <%= link_to venues_path, class: "nav-link #{current_page?(venues_path) ? 'active' : ''}" do %>
+                <span class="nav-icon">🏟️</span> Venues
+              <% end %>
+            </div>
+          <% end %>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="main-content">
+          <% if notice.present? %>
+            <div class="flash flash-notice animate-fade-up">
+              ✅ <%= notice %>
+              <button class="flash__close" onclick="this.parentElement.remove()">✕</button>
+            </div>
+          <% end %>
+          <% if alert.present? %>
+            <div class="flash flash-alert animate-fade-up">
+              ⚠️ <%= alert %>
+              <button class="flash__close" onclick="this.parentElement.remove()">✕</button>
+            </div>
+          <% end %>
+
+          <%= yield %>
+        </main>
+      </div>
+
+    <% else %>
+      <!-- Public layout (no sidebar) -->
+      <div class="layout--no-sidebar">
+        <nav class="navbar">
+          <%= link_to root_path, class: "navbar__brand" do %>
+            <div class="navbar__brand-icon">🎫</div>
+            EventFlow
+          <% end %>
+          <div class="navbar__actions">
+            <%= link_to "Sign In", new_user_session_path, class: "btn btn-secondary btn-sm" %>
+            <%= link_to "Get Started", new_user_registration_path, class: "btn btn-primary btn-sm" %>
+          </div>
+        </nav>
+        <main style="max-width:100%;">
+          <% if notice.present? %>
+            <div style="max-width:480px;margin:1rem auto;">
+              <div class="flash flash-notice"><%= notice %></div>
+            </div>
+          <% end %>
+          <% if alert.present? %>
+            <div style="max-width:480px;margin:1rem auto;">
+              <div class="flash flash-alert"><%= alert %></div>
+            </div>
+          <% end %>
+          <%= yield %>
+        </main>
+      </div>
+    <% end %>
+  </body>
+</html>
