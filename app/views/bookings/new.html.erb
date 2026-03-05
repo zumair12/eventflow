@@ -1,0 +1,181 @@
+<%# Bookings New — Interactive Seat Selection -%>
+<% content_for :title, "Select Seats — #{@event.title}" %>
+
+<div class="page-header">
+  <div>
+    <%= link_to "← Back to Event", event_path(@event), class: "btn btn-secondary btn-sm mb-2" %>
+    <h1 class="page-header__title">Select Your Seats</h1>
+    <p class="page-header__subtitle"><%= @event.title %> — <%= @event.start_at.strftime("%B %d, %Y at %I:%M %p") %></p>
+  </div>
+  <div class="card" style="padding:1rem 1.5rem;flex-shrink:0;">
+    <div style="font-size:0.75rem;color:var(--text-muted);font-weight:600;text-transform:uppercase;letter-spacing:0.8px;">Price per seat</div>
+    <div style="font-size:1.5rem;font-weight:800;color:<%= @event.free? ? 'var(--success)' : 'var(--text-primary)' %>;">
+      <%= @event.free? ? "Free" : number_to_currency(@event.price, unit: "$") %>
+    </div>
+  </div>
+</div>
+
+<%= form_with url: event_bookings_path(@event), method: :post, id: "booking-form", local: true do |f| %>
+  <div class="d-flex gap-3" style="flex-wrap:wrap;align-items:flex-start;">
+    <!-- Seat Map -->
+    <div style="flex:2;min-width:320px;">
+      <div class="card">
+        <div class="card-header">
+          <h3 style="margin:0;">💺 <%= @event.venue.name %> Seat Map</h3>
+          <span id="selected-count" class="badge badge-primary">0 selected</span>
+        </div>
+        <div class="card-body">
+          <div class="seat-map-wrapper">
+            <div class="seat-map-screen"></div>
+
+            <% @seat_map.each do |row_num, row_seats| %>
+              <div class="seat-row">
+                <span class="seat-row-label"><%= ('A'.ord + row_num - 1).chr %></span>
+                <% row_seats.sort_by(&:column).each do |seat| %>
+                  <% booked = params[:seat_ids].to_a.include?(seat.id.to_s) rescue false %>
+                  <button
+                    type="button"
+                    class="seat-btn seat-btn--available seat-btn--<%= seat.seat_type %>"
+                    data-seat-id="<%= seat.id %>"
+                    data-seat-label="<%= seat.label %>"
+                    data-seat-type="<%= seat.seat_type %>"
+                    data-seat-price="<%= @event.price %>"
+                    title="<%= seat.label %> – <%= seat.seat_type.capitalize %>"
+                    onclick="toggleSeat(this)">
+                    <span style="font-size:0.55rem;"><%= seat.column %></span>
+                  </button>
+                <% end %>
+              </div>
+            <% end %>
+
+            <div class="seat-legend">
+              <div class="legend-item">
+                <div class="legend-swatch" style="background:var(--bg-input);border-color:var(--primary-600);"></div>
+                Standard
+              </div>
+              <div class="legend-item">
+                <div class="legend-swatch" style="background:rgba(236,72,153,0.15);border-color:var(--accent-600);"></div>
+                VIP
+              </div>
+              <div class="legend-item">
+                <div class="legend-swatch" style="background:linear-gradient(135deg,var(--primary-600),var(--primary-500));border-color:var(--primary-400);"></div>
+                Selected
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Booking Summary -->
+    <div style="flex:1;min-width:260px;position:sticky;top:calc(var(--nav-height) + 1rem);">
+      <div class="card">
+        <div class="card-header"><h3 style="margin:0;">📋 Booking Summary</h3></div>
+        <div class="card-body">
+          <div style="display:flex;flex-direction:column;gap:0.75rem;">
+            <div>
+              <div style="font-size:0.75rem;color:var(--text-muted);font-weight:600;text-transform:uppercase;letter-spacing:0.8px;">Event</div>
+              <div style="font-weight:600;color:var(--text-primary);margin-top:2px;"><%= @event.title %></div>
+            </div>
+            <div>
+              <div style="font-size:0.75rem;color:var(--text-muted);font-weight:600;text-transform:uppercase;letter-spacing:0.8px;">Date</div>
+              <div style="font-weight:600;color:var(--text-primary);margin-top:2px;"><%= @event.start_at.strftime("%B %d, %Y at %I:%M %p") %></div>
+            </div>
+            <div>
+              <div style="font-size:0.75rem;color:var(--text-muted);font-weight:600;text-transform:uppercase;letter-spacing:0.8px;">Venue</div>
+              <div style="font-weight:600;color:var(--text-primary);margin-top:2px;"><%= @event.venue.name %></div>
+            </div>
+          </div>
+
+          <div style="border-top:1px solid var(--border-color);margin:1rem 0;padding-top:1rem;">
+            <div style="font-size:0.8rem;font-weight:700;color:var(--text-secondary);margin-bottom:0.5rem;">Selected Seats</div>
+            <div id="selected-seats-list" style="display:flex;flex-wrap:wrap;gap:0.4rem;min-height:36px;">
+              <span style="color:var(--text-muted);font-size:0.8rem;">Click seats to select</span>
+            </div>
+          </div>
+
+          <div style="border-top:1px solid var(--border-color);margin:1rem 0;padding-top:1rem;">
+            <div style="display:flex;justify-content:space-between;align-items:center;">
+              <span style="font-weight:700;color:var(--text-secondary);">Total:</span>
+              <span id="total-price" style="font-size:1.5rem;font-weight:800;color:var(--text-primary);">$0.00</span>
+            </div>
+          </div>
+
+          <!-- Hidden seat_ids fields -->
+          <div id="seat-inputs"></div>
+
+          <button type="submit" id="book-btn" class="btn btn-primary w-100" disabled
+                  style="margin-top:0.5rem;opacity:0.5;">
+            🎟️ Confirm Booking
+          </button>
+
+          <p style="font-size:0.75rem;color:var(--text-muted);text-align:center;margin-top:0.5rem;">
+            You'll receive a confirmation email after booking.
+          </p>
+        </div>
+      </div>
+    </div>
+  </div>
+<% end %>
+
+<script>
+const selectedSeats = new Map(); // seat_id -> {label, type, price}
+const pricePerSeat = <%= @event.price.to_f %>;
+const isFree = <%= @event.free? %>;
+
+function toggleSeat(btn) {
+  const id    = btn.dataset.seatId;
+  const label = btn.dataset.seatLabel;
+  const type  = btn.dataset.seatType;
+
+  if (selectedSeats.has(id)) {
+    selectedSeats.delete(id);
+    btn.classList.remove('seat-btn--selected');
+    btn.classList.add('seat-btn--available');
+    btn.innerHTML = `<span style="font-size:0.55rem;">${btn.title.split(' ')[0].replace(label, '').trim() || label.replace(/\D/g,'')}</span>`;
+    // Restore number
+    const col = label.replace(/[A-Z]/,'');
+    btn.innerHTML = `<span style="font-size:0.55rem;">${col}</span>`;
+  } else {
+    selectedSeats.set(id, { label, type, price: pricePerSeat });
+    btn.classList.remove('seat-btn--available');
+    btn.classList.add('seat-btn--selected');
+    btn.innerHTML = '✓';
+  }
+
+  updateSummary();
+}
+
+function updateSummary() {
+  const count = selectedSeats.size;
+
+  // Count badge
+  document.getElementById('selected-count').textContent = `${count} selected`;
+
+  // Seats pill list
+  const list = document.getElementById('selected-seats-list');
+  if (count === 0) {
+    list.innerHTML = '<span style="color:var(--text-muted);font-size:0.8rem;">Click seats to select</span>';
+  } else {
+    list.innerHTML = Array.from(selectedSeats.values())
+      .map(s => `<span class="badge badge-primary" style="font-size:0.78rem;">${s.label}</span>`)
+      .join('');
+  }
+
+  // Total
+  const total = count * pricePerSeat;
+  document.getElementById('total-price').textContent =
+    isFree ? 'Free' : `$${total.toFixed(2)}`;
+
+  // Hidden inputs
+  const inputsEl = document.getElementById('seat-inputs');
+  inputsEl.innerHTML = Array.from(selectedSeats.keys())
+    .map(id => `<input type="hidden" name="seat_ids[]" value="${id}">`)
+    .join('');
+
+  // Submit button
+  const btn = document.getElementById('book-btn');
+  btn.disabled = count === 0;
+  btn.style.opacity = count === 0 ? '0.5' : '1';
+}
+</script>

@@ -1,0 +1,128 @@
+<%# Bookings Index -%>
+<% content_for :title, "My Bookings" %>
+
+<div class="page-header">
+  <div>
+    <h1 class="page-header__title">🎟️ Bookings</h1>
+    <p class="page-header__subtitle">
+      <%= current_user.admin? ? "All bookings in the system" : "Your booking history" %>
+    </p>
+  </div>
+  <%= link_to "Browse Events", events_path, class: "btn btn-primary" %>
+</div>
+
+<!-- Status Summary -->
+<div class="stats-grid mb-4">
+  <% Booking.statuses.keys.each do |status| %>
+    <div class="stat-card">
+      <div class="stat-icon stat-icon--<%= booking_status_color(status) %>">
+        <%= booking_status_emoji(status) %>
+      </div>
+      <div class="stat-content">
+        <div class="stat-label"><%= status.capitalize %></div>
+        <div class="stat-value"><%= @status_counts[status] || 0 %></div>
+      </div>
+    </div>
+  <% end %>
+</div>
+
+<!-- Filters -->
+<%= form_with url: bookings_path, method: :get, local: true do |f| %>
+  <div class="filters-bar mb-3">
+    <div class="search-box">
+      <span class="search-box__icon">🔍</span>
+      <%= f.text_field :q, value: params[:q], placeholder: "Search by event name…",
+          class: "form-control", id: "booking-search" %>
+    </div>
+    <div class="d-flex gap-1" style="flex-wrap:wrap;">
+      <%= link_to "All", bookings_path, class: "filter-chip #{params[:status].blank? ? 'active' : ''}" %>
+      <% Booking.statuses.keys.each do |status| %>
+        <%= link_to status.capitalize, bookings_path(status: status, q: params[:q]),
+            class: "filter-chip #{params[:status] == status ? 'active' : ''}" %>
+      <% end %>
+    </div>
+  </div>
+<% end %>
+
+<!-- Bookings Table -->
+<% if @bookings.any? %>
+  <div class="card">
+    <div class="table-wrapper">
+      <table id="bookings-table">
+        <thead>
+          <tr>
+            <th>Reference</th>
+            <th>Event</th>
+            <th>Date</th>
+            <th>Seats</th>
+            <th>Amount</th>
+            <th>Status</th>
+            <th>Booked On</th>
+            <th style="text-align:right;">Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          <% @bookings.each do |booking| %>
+            <tr>
+              <td>
+                <code style="color:var(--primary-400);font-size:0.82rem;font-weight:700;">
+                  <%= booking.reference_code %>
+                </code>
+              </td>
+              <td>
+                <%= link_to booking.event.title, event_path(booking.event),
+                    style: "color:var(--text-primary);font-weight:600;font-size:0.85rem;" %>
+              </td>
+              <td>
+                <div style="font-size:0.82rem;">
+                  <%= booking.event.start_at.strftime("%b %d, %Y") %>
+                  <div style="color:var(--text-muted);font-size:0.75rem;"><%= booking.event.start_at.strftime("%I:%M %p") %></div>
+                </div>
+              </td>
+              <td>
+                <div class="d-flex gap-1" style="flex-wrap:wrap;">
+                  <% booking.seats.each do |seat| %>
+                    <span class="badge badge-secondary" style="font-size:0.7rem;"><%= seat.label %></span>
+                  <% end %>
+                </div>
+              </td>
+              <td>
+                <strong style="color:<%= booking.total_amount.zero? ? 'var(--success)' : 'var(--text-primary)' %>;">
+                  <%= booking.total_amount.zero? ? "Free" : number_to_currency(booking.total_amount, unit: "$") %>
+                </strong>
+              </td>
+              <td><%= booking_status_badge(booking.status) %></td>
+              <td style="font-size:0.82rem;color:var(--text-muted);">
+                <%= booking.created_at.strftime("%b %d, %Y") %>
+              </td>
+              <td>
+                <div class="d-flex gap-1" style="justify-content:flex-end;">
+                  <%= link_to "View", booking_path(booking), class: "btn btn-secondary btn-sm" %>
+                  <% if booking.status_confirmed? && policy(booking).cancel? %>
+                    <%= button_to "Cancel", cancel_booking_path(booking), method: :patch,
+                        class: "btn btn-danger btn-sm",
+                        data: { turbo_confirm: "Cancel this booking?" } %>
+                  <% end %>
+                </div>
+              </td>
+            </tr>
+          <% end %>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <div class="text-center mt-4">
+    <%== pagy_nav(@pagy) if @pagy.pages > 1 %>
+  </div>
+
+<% else %>
+  <div class="empty-state">
+    <div class="empty-state__icon">🎟️</div>
+    <h3>No bookings found</h3>
+    <p class="empty-state__text">
+      <%= params[:status].present? ? "No #{params[:status]} bookings." : "You haven't made any bookings yet." %>
+    </p>
+    <%= link_to "Browse Events", events_path, class: "btn btn-primary" %>
+  </div>
+<% end %>

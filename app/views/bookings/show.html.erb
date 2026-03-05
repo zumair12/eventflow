@@ -1,0 +1,145 @@
+<%# Booking Show -%>
+<% content_for :title, "Booking #{@booking.reference_code}" %>
+
+<div class="page-header">
+  <div>
+    <%= link_to "← My Bookings", bookings_path, class: "btn btn-secondary btn-sm mb-2" %>
+    <h1 class="page-header__title">Booking Details</h1>
+  </div>
+  <div class="d-flex gap-1">
+    <% if @booking.status_confirmed? && policy(@booking).cancel? %>
+      <%= button_to "🚫 Cancel Booking", cancel_booking_path(@booking), method: :patch,
+          class: "btn btn-danger",
+          data: { turbo_confirm: "Are you sure you want to cancel this booking? This action cannot be undone." } %>
+    <% end %>
+    <% if policy(@booking).destroy? && @booking.status_cancelled? %>
+      <%= button_to "🗑️ Delete", booking_path(@booking), method: :delete,
+          class: "btn btn-danger btn-sm",
+          data: { turbo_confirm: "Delete this booking record?" } %>
+    <% end %>
+  </div>
+</div>
+
+<div class="d-flex gap-3" style="flex-wrap:wrap;align-items:flex-start;">
+  <!-- Main -->
+  <div style="flex:2;min-width:320px;display:flex;flex-direction:column;gap:1rem;">
+    <!-- Reference Card -->
+    <div class="booking-reference animate-pulse-glow">
+      <div style="font-size:0.75rem;color:var(--text-muted);font-weight:600;text-transform:uppercase;letter-spacing:1.5px;margin-bottom:0.5rem;">Booking Reference</div>
+      <div class="booking-reference__code"><%= @booking.reference_code %></div>
+      <div style="margin-top:0.75rem;">
+        <%= booking_status_badge(@booking.status) %>
+      </div>
+    </div>
+
+    <!-- Event Summary -->
+    <div class="card">
+      <div class="card-header"><h3 style="margin:0;">🎉 Event</h3></div>
+      <div class="card-body">
+        <div class="d-flex gap-2" style="flex-wrap:wrap;">
+          <div style="width:64px;height:64px;background:linear-gradient(135deg,var(--primary-700),var(--primary-900));border-radius:14px;display:flex;align-items:center;justify-content:center;font-size:2rem;flex-shrink:0;">
+            <%= event_emoji(@booking.event.category) %>
+          </div>
+          <div style="flex:1;">
+            <div style="font-size:1.15rem;font-weight:700;color:var(--text-primary)"><%= @booking.event.title %></div>
+            <div style="color:var(--text-muted);font-size:0.85rem;margin-top:0.25rem;">
+              📅 <%= @booking.event.start_at.strftime("%A, %B %d, %Y at %I:%M %p") %>
+            </div>
+            <div style="color:var(--text-muted);font-size:0.85rem;">
+              🏟️ <%= @booking.event.venue.name %>, <%= @booking.event.venue.city %>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="card-footer">
+        <%= link_to "View Event", event_path(@booking.event), class: "btn btn-secondary btn-sm" %>
+      </div>
+    </div>
+
+    <!-- Seats -->
+    <div class="card">
+      <div class="card-header">
+        <h3 style="margin:0;">💺 Reserved Seats</h3>
+        <span class="badge badge-primary"><%= pluralize(@booking.total_seats, "seat") %></span>
+      </div>
+      <div class="card-body">
+        <div style="display:flex;flex-wrap:wrap;gap:0.5rem;">
+          <% @booking.seats.each do |seat| %>
+            <div style="background:linear-gradient(135deg,rgba(99,102,241,0.2),rgba(236,72,153,0.1));border:1px solid rgba(99,102,241,0.3);border-radius:8px;padding:0.5rem 0.875rem;text-align:center;">
+              <div style="font-size:1.15rem;font-weight:800;color:var(--primary-300)"><%= seat.label %></div>
+              <div style="font-size:0.7rem;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.5px;"><%= seat.seat_type %></div>
+            </div>
+          <% end %>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Sidebar -->
+  <div style="flex:1;min-width:240px;display:flex;flex-direction:column;gap:1rem;">
+    <!-- Pricing -->
+    <div class="card">
+      <div class="card-header"><h4 style="margin:0;">💰 Payment</h4></div>
+      <div class="card-body">
+        <div style="display:flex;flex-direction:column;gap:0.5rem;">
+          <div style="display:flex;justify-content:space-between;">
+            <span style="color:var(--text-secondary);font-size:0.85rem;">Price per seat</span>
+            <span style="font-weight:600;"><%= @booking.event.free? ? 'Free' : number_to_currency(@booking.event.price, unit:"$") %></span>
+          </div>
+          <div style="display:flex;justify-content:space-between;">
+            <span style="color:var(--text-secondary);font-size:0.85rem;">Seats</span>
+            <span style="font-weight:600;"><%= @booking.total_seats %></span>
+          </div>
+          <div style="border-top:1px solid var(--border-color);padding-top:0.5rem;margin-top:0.25rem;display:flex;justify-content:space-between;">
+            <span style="font-weight:700;">Total</span>
+            <span style="font-size:1.25rem;font-weight:800;color:var(--text-primary);">
+              <%= @booking.total_amount.zero? ? 'Free' : number_to_currency(@booking.total_amount, unit:"$") %>
+            </span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Booking Meta -->
+    <div class="card">
+      <div class="card-header"><h4 style="margin:0;">📋 Details</h4></div>
+      <div class="card-body">
+        <div style="display:flex;flex-direction:column;gap:0.75rem;">
+          <div>
+            <div style="font-size:0.72rem;color:var(--text-muted);font-weight:600;text-transform:uppercase;letter-spacing:0.8px;">Attendee</div>
+            <div style="font-weight:600;color:var(--text-primary);margin-top:2px;"><%= @booking.user.full_name %></div>
+            <div style="font-size:0.8rem;color:var(--text-muted);"><%= @booking.user.email %></div>
+          </div>
+          <div>
+            <div style="font-size:0.72rem;color:var(--text-muted);font-weight:600;text-transform:uppercase;letter-spacing:0.8px;">Booked On</div>
+            <div style="font-weight:600;color:var(--text-primary);margin-top:2px;"><%= @booking.created_at.strftime("%B %d, %Y at %I:%M %p") %></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Reminders -->
+    <% if @booking.reminders.any? %>
+      <div class="card">
+        <div class="card-header"><h4 style="margin:0;">🔔 Reminders</h4></div>
+        <div class="card-body" style="padding:0;">
+          <% @booking.reminders.order(:remind_at).each do |reminder| %>
+            <div style="padding:0.75rem 1rem;border-bottom:1px solid var(--border-color);display:flex;justify-content:space-between;align-items:center;">
+              <div>
+                <div style="font-size:0.82rem;font-weight:600;color:var(--text-primary);">
+                  <%= reminder.reminder_type_day_before? ? "Day Before" : "One Hour Before" %>
+                </div>
+                <div style="font-size:0.75rem;color:var(--text-muted);"><%= reminder.remind_at.strftime("%b %d at %I:%M %p") %></div>
+              </div>
+              <% if reminder.sent? %>
+                <span class="badge badge-success">✓ Sent</span>
+              <% else %>
+                <span class="badge badge-warning">Pending</span>
+              <% end %>
+            </div>
+          <% end %>
+        </div>
+      </div>
+    <% end %>
+  </div>
+</div>
