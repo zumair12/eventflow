@@ -18,7 +18,7 @@ gem "thruster", require: false
 gem "image_processing", "~> 1.2"
 
 # Auth & Authorization
-gem "devise", "~> 4.9"
+gem "devise", "~> 5.0"
 gem "pundit", "~> 2.3"
 
 # Pagination
