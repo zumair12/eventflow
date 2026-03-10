@@ -176,16 +176,18 @@ events_data = [
 ]
 
 created_events = events_data.map do |data|
-  event = Event.find_or_create_by!(title: data[:title], organizer: data[:organizer]) do |e|
-    e.description  = data[:description]
-    e.start_at     = data[:start_at]
-    e.end_at       = data[:end_at]
-    e.capacity     = data[:capacity]
-    e.price        = data[:price]
-    e.category     = data[:category]
-    e.status       = data[:status]
-    e.venue        = data[:venue]
-  end
+  event = Event.find_or_initialize_by(title: data[:title], organizer: data[:organizer])
+  event.assign_attributes(
+    description: data[:description],
+    start_at:    data[:start_at],
+    end_at:      data[:end_at],
+    capacity:    data[:capacity],
+    price:       data[:price],
+    category:    data[:category],
+    status:      data[:status],
+    venue:       data[:venue]
+  )
+  event.save!
   event
 end
 

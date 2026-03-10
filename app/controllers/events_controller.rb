@@ -16,7 +16,9 @@ class EventsController < ApplicationController
   end
 
   def calendar
-    @events = policy_scope(Event).published.upcoming
+    @events = policy_scope(Event).published
+                                 .includes(:venue, :bookings)
+                                 .order(:start_at)
     @events_json = @events.map { |e| event_to_calendar_data(e) }.to_json
   end
 
@@ -112,12 +114,14 @@ class EventsController < ApplicationController
 
   def event_color(event)
     case event.category
-    when "concert"   then "#6366f1"
+    when "concert"    then "#6366f1"
     when "conference" then "#0ea5e9"
-    when "workshop"  then "#10b981"
-    when "sports"    then "#f59e0b"
-    when "festival"  then "#ec4899"
-    else "#8b5cf6"
+    when "workshop"   then "#10b981"
+    when "sports"     then "#f59e0b"
+    when "festival"   then "#ec4899"
+    when "exhibition" then "#a78bfa"
+    when "meetup"     then "#34d399"
+    else                   "#8b5cf6"
     end
   end
 end

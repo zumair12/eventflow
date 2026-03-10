@@ -1,10 +1,16 @@
 <%# Calendar View -%>
 <% content_for :title, "Event Calendar" %>
 
+<%# Inject FullCalendar JS only on this page — avoids loading it app-wide -%>
+<% content_for :head do %>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.11/index.global.min.css">
+  <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.11/index.global.min.js"></script>
+<% end %>
+
 <div class="page-header">
   <div>
     <h1 class="page-header__title">📅 Event Calendar</h1>
-    <p class="page-header__subtitle">Browse events by date</p>
+    <p class="page-header__subtitle">Browse upcoming events by date</p>
   </div>
   <div class="d-flex gap-1">
     <div class="view-tabs">
@@ -18,46 +24,131 @@
 </div>
 
 <div class="calendar-wrapper animate-fade-up">
-  <div id="calendar" data-events="<%= @events_json %>"></div>
+  <div
+    id="calendar"
+    data-events="<%= json_escape(@events_json || '[]') %>"
+  ></div>
 </div>
 
-<!-- Category Legend -->
-<div class="d-flex gap-2 mt-3" style="flex-wrap:wrap;justify-content:center;">
-  <% [["concert","#6366f1"],["conference","#0ea5e9"],["workshop","#10b981"],["sports","#f59e0b"],["festival","#ec4899"]].each do |cat, color| %>
-    <div class="d-flex align-center gap-1" style="font-size:0.8rem;color:var(--text-secondary);">
-      <div style="width:10px;height:10px;border-radius:50%;background:<%= color %>;"></div>
-      <%= cat.capitalize %>
+<%# Category Legend %>
+<div class="calendar-legend">
+  <% [
+    ["Festival",    "#ec4899"],
+    ["Concert",     "#6366f1"],
+    ["Conference",  "#0ea5e9"],
+    ["Workshop",    "#10b981"],
+    ["Sports",      "#f59e0b"],
+    ["Exhibition",  "#a78bfa"],
+    ["Meetup",      "#34d399"],
+    ["Other",       "#8b5cf6"]
+  ].each do |cat, color| %>
+    <div class="legend-dot-item">
+      <div class="legend-dot" style="background:<%= color %>;"></div>
+      <span><%= cat %></span>
     </div>
   <% end %>
 </div>
 
-<script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.11/index.global.min.js"></script>
+<%# FullCalendar initialisation — Turbo-safe, uses turbo:load -%>
 <script>
-  document.addEventListener('DOMContentLoaded', function () {
-    const calendarEl = document.getElementById('calendar');
-    const events = JSON.parse(calendarEl.dataset.events);
+(function () {
+  // Track current calendar instance so we can destroy it on Turbo navigation
+  let calendarInstance = null;
 
-    const calendar = new FullCalendar.Calendar(calendarEl, {
+  function initCalendar() {
+    const calendarEl = document.getElementById('calendar');
+    if (!calendarEl) return;
+
+    // Destroy previous instance if navigating with Turbo cache
+    if (calendarInstance) {
+      calendarInstance.destroy();
+      calendarInstance = null;
+    }
+
+    let events = [];
+    try {
+      events = JSON.parse(calendarEl.dataset.events || '[]');
+    } catch (e) {
+      console.warn('[EventFlow] Calendar: could not parse events JSON', e);
+    }
+
+    calendarInstance = new FullCalendar.Calendar(calendarEl, {
       initialView: 'dayGridMonth',
+
       headerToolbar: {
-        left: 'prev,next today',
+        left:   'prev,next today',
         center: 'title',
-        right: 'dayGridMonth,timeGridWeek,listWeek'
+        right:  'dayGridMonth,timeGridWeek,listWeek'
       },
+
+      buttonText: {
+        today:    'Today',
+        month:    'Month',
+        week:     'Week',
+        list:     'List'
+      },
+
+      // Improved theme integration
+      themeSystem: 'standard',
+
+      // Start week on Monday
+      firstDay: 1,
+
+      // Show event times
+      displayEventTime: true,
+      displayEventEnd:  false,
+
       events: events,
-      eventClick: function(info) {
+
+      // Navigate to event on click
+      eventClick: function (info) {
         if (info.event.url) {
-          window.location.href = info.event.url;
           info.jsEvent.preventDefault();
+          window.location.href = info.event.url;
         }
       },
-      eventMouseEnter: function(info) {
+
+      // Rich tooltip on hover
+      eventDidMount: function (info) {
         const props = info.event.extendedProps;
-        info.el.title = `${info.event.title}\n📍 ${props.venue}\n💺 ${props.available_seats} seats\n💰 ${props.price == 0 ? 'Free' : '$' + props.price}`;
+        const price = (props.price == 0 || props.price === null)
+                        ? 'Free'
+                        : '$' + parseFloat(props.price).toFixed(2);
+        info.el.setAttribute('title',
+          info.event.title +
+          '\n📍 ' + (props.venue   || '') +
+          '\n🏷️ '  + (props.category ? props.category.charAt(0).toUpperCase() + props.category.slice(1) : '') +
+          '\n💺 '  + (props.available_seats != null ? props.available_seats + ' seats left' : '') +
+          '\n💰 '  + price
+        );
       },
+
+      // Responsive height
       height: 'auto',
-      contentHeight: 650
+      contentHeight: 680,
+
+      // Loading state
+      loading: function (isLoading) {
+        calendarEl.style.opacity = isLoading ? '0.5' : '1';
+      }
     });
-    calendar.render();
+
+    calendarInstance.render();
+  }
+
+  // Works with both Turbo (turbo:load) and plain page loads (DOMContentLoaded)
+  document.addEventListener('turbo:load',        initCalendar);
+  document.addEventListener('DOMContentLoaded',  initCalendar);
+
+  // Clean up when Turbo caches the page (prevents duplicate renders on back-nav)
+  document.addEventListener('turbo:before-cache', function () {
+    if (calendarInstance) {
+      calendarInstance.destroy();
+      calendarInstance = null;
+      // Clear rendered calendar DOM so FullCalendar doesn't see stale content
+      const el = document.getElementById('calendar');
+      if (el) el.innerHTML = '';
+    }
   });
+})();
 </script>
