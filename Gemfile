@@ -22,7 +22,7 @@ gem "devise", "~> 4.9"
 gem "pundit", "~> 2.3"
 
 # Pagination
-gem "pagy", "~> 8.0"
+gem "pagy", "~> 43.4"
 
 # Charts
 gem "chartkick"
