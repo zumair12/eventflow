@@ -26,7 +26,7 @@ gem "pagy", "~> 8.0"
 
 # Charts
 gem "chartkick"
-gem "groupdate", "~> 6.2"
+gem "groupdate", "~> 6.8"
 
 group :development, :test do
   gem "debug", platforms: %i[mri windows], require: "debug/prelude"
